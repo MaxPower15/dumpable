@@ -67,6 +67,19 @@ module Dumpable
       cloned_attributes = object.attributes.clone
       return nil unless cloned_attributes["id"].present?
       cloned_attributes["id"] += @id_padding
+      if @options[:column_values_by_type]
+        @options[:column_values_by_type].each do |type, key_val_pairs|
+          klass = type.to_s.constantize
+          if object.is_a?(klass)
+            if key_val_pairs.is_a?(Proc)
+              key_val_pairs = key_val_pairs.call(object)
+            end
+            key_val_pairs.each do |key, val|
+              cloned_attributes[key] = val
+            end
+          end
+        end
+      end
       key_values = cloned_attributes.collect do |key,value|
         [key, dump_value_string(value)] unless skip_columns.include?(key.to_s)
       end.compact
